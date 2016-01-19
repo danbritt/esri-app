@@ -2,3 +2,4 @@ node_modules/
 bower_components/
 src/config.js
 staging/config.js
+notes.txt
