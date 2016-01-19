@@ -1,0 +1,20 @@
+# npm global installs (npm install -g [name]
+- bower
+- gulp 
+- npm-check-updates (get latest updates of packages)
+- pm2 (node process manager for production)
+- vulcanize (for packaging polymer apps)
+
+# npm search [packagename]
+# npm list -g -depth=0(list global dependencies... to find path or see what's installed)
+# npm install (installs dev and prod dependencies)
+# npm install --production (installs production dependencies only)
+# npm install [name] --save | --save-dev || --save-optional (saves to package.json)
+# npm init (creates new package.json)
+# npm uninstall
+
+# bower list
+# bower search [packagename]
+# bower install (install all dependencies)
+# bower install --save
+
