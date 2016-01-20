@@ -23,11 +23,14 @@
                 'esri/arcgis/utils',
                 'esri/config',
                 'esri/urlUtils',
+                'esri/geometry/Point',
+                'esri/SpatialReference',
+                'esri/toolbars/draw',
+                'esri/tasks/GeometryService',
                 'dojo/domReady!'
-            ], function(Map, arcgisUtils, esriConfig, urlUtils) {
+            ], function(Map, arcgisUtils, esriConfig, urlUtils, Point, SpatialReference, Draw, GeometryService) {
                 var map = null;
-                // esriConfig.defaults.io.proxyUrl = '/api/esriProxy';
-                // esriConfig.defaults.io.alwaysUseProxy = true;
+
                 urlUtils.addProxyRule({
                     urlPrefix: 'www.arcgis.com',
                     proxyUrl: '/api/esriProxy'
@@ -36,8 +39,40 @@
                     urlPrefix: 'services5.arcgis.com',
                     proxyUrl: '/api/esriProxy'
                 });
-                arcgisUtils.createMap('4e3f8d8b87d54e589e60eca1f5c770fe','mapDiv').then(function (res) {
+                esriConfig.defaults.geometryService = new GeometryService('http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
+
+                var createMapOptions = {
+                    mapOptions: {
+                        center: new Point(-10169947, 4459788, new SpatialReference(102100)),
+                        zoom: 15
+                        // ,
+                        // basemap: "streets"
+                    }
+                }
+                arcgisUtils.createMap('4e3f8d8b87d54e589e60eca1f5c770fe', 'mapDiv', createMapOptions).then(function (res) {
                     map = res.map;
+                    // console.log(map.loaded);
+                    // map.on('load', function(event) {
+                    //     console.log(event);
+                    // });
+                    console.log(map.basemapLayerIds);
+                    console.log(map.graphicsLayerIds);
+                    console.log(map.layerIds);
+
+                    var drawToolbar = new Draw(map);
+                    var notesLayer = map.getLayer('notes_7183');
+
+                    notesLayer.on('click', function(event) {
+                        console.log(event);
+                    });
+
+                     //drawToolbar.activate(Draw.POINT);
+                    map.on('click', function(event) {
+
+                        //console.log(map.spatialReference);
+                        //console.log(map.getZoom());
+                        //console.log(event);
+                    });
                 });
                 // var map = new Map('mapDiv', {
                 //     center: [-56.049, 38.485],

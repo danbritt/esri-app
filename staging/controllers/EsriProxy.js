@@ -8,6 +8,7 @@ var EsriProxy = function () {
     function EsriProxy(req, res, configJSON, request) {
         _classCallCheck(this, EsriProxy);
 
+        this.triedNewToken = false;
         this.req = req;
         this.res = res;
         this.request = request;
@@ -71,7 +72,7 @@ var EsriProxy = function () {
                 } catch (err) {}
 
                 if (parsedBody.error && (parsedBody.error.code === 403 || parsedBody.error.code === 489 || parsedBody.error.code === 499) && !self.triedNewToken) {
-                    console.log('getting token');
+                    //console.log('getting token');
                     self.getToken(self.attemptProxy.bind(self));
                 } else {
                     self.res.send(body);
