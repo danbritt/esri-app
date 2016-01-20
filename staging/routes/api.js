@@ -1,11 +1,13 @@
 'use strict';
 
 var express = require('express');
+var request = require('request');
 //var JWT = require('jsonwebtoken');
 //var bodyParser = require('body-parser');
 //var sequelize = require('sequelize');
 //var request = require('request');
 var esriProxy = require('../controllers/EsriProxy.js');
+var esriProxyConfig = require('../config.js');
 
 // Sequelize example
 /*var sequelizeObj = new sequelize('hg3_shannon_3', 'root', 'l00per', {
@@ -80,14 +82,12 @@ var router = new express.Router();
 	});
 });*/
 
-var esriProxyConfig = require('../config.js');
-
 // router.use('/esriProxy', function(req, res) {
 // 	var esriProxyObj = new esriProxy(esriProxyConfig, req, res);
 //
 // });
 
-router.use('/esriProxy', new esriProxy(esriProxyConfig));
+router.use('/esriProxy', new esriProxy(esriProxyConfig, request));
 
 // router.get('/test', function(req,res) {
 // 	var responseObj = {

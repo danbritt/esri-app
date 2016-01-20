@@ -4,14 +4,13 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var request = require('request');
-
 var EsriProxy = function () {
-    function EsriProxy(req, res, next, configJSON) {
+    function EsriProxy(req, res, configJSON, request) {
         _classCallCheck(this, EsriProxy);
 
         this.req = req;
         this.res = res;
+        this.request = request;
         this.configJSON = configJSON;
 
         this.proxyUrl = null;
@@ -61,7 +60,7 @@ var EsriProxy = function () {
         key: 'attemptProxy',
         value: function attemptProxy() {
             var self = this;
-            request({
+            this.request({
                 url: self.proxyUrl,
                 qs: self.proxyQueryStringHash,
                 method: 'GET'
@@ -84,7 +83,7 @@ var EsriProxy = function () {
         value: function getToken(callback) {
             var self = this;
             self.triedNewToken = true;
-            request.post({
+            this.request.post({
                 url: this.configJSON.serverUrls[0].oauth2Endpoint,
                 json: true,
                 form: {
@@ -105,11 +104,11 @@ var EsriProxy = function () {
     return EsriProxy;
 }();
 
-var EsriProxyMW = function EsriProxyMW(configJSON) {
+var EsriProxyMW = function EsriProxyMW(configJSON, requestModule) {
     _classCallCheck(this, EsriProxyMW);
 
     return function (req, res, next) {
-        var esriProxy = new EsriProxy(req, res, next, configJSON);
+        var esriProxy = new EsriProxy(req, res, configJSON, requestModule);
         esriProxy.attemptProxy();
     };
 };

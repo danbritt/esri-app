@@ -1,10 +1,8 @@
-var request = require('request');
-
-
 class EsriProxy {
-    constructor(req, res, next, configJSON) {
+    constructor(req, res, configJSON, request) {
         this.req = req;
         this.res = res;
+        this.request = request;
         this.configJSON = configJSON;
 
         this.proxyUrl = null;
@@ -49,7 +47,7 @@ class EsriProxy {
 
     attemptProxy() {
         var self = this;
-        request({
+        this.request({
             url: self.proxyUrl,
             qs: self.proxyQueryStringHash,
             method: 'GET'
@@ -73,7 +71,7 @@ class EsriProxy {
     getToken(callback) {
         var self = this;
         self.triedNewToken = true;
-        request.post({
+        this.request.post({
             url: this.configJSON.serverUrls[0].oauth2Endpoint,
             json: true,
             form: {
@@ -93,9 +91,9 @@ class EsriProxy {
 
 
 class EsriProxyMW {
-    constructor(configJSON) {
+    constructor(configJSON, requestModule) {
         return (req, res, next) => {
-            var esriProxy = new EsriProxy(req, res, next, configJSON);
+            var esriProxy = new EsriProxy(req, res, configJSON, requestModule);
             esriProxy.attemptProxy();
         }
     }
