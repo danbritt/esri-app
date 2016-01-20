@@ -14,41 +14,56 @@ var EsriProxy = function () {
         this.res = res;
         this.configJSON = configJSON;
 
-        var self = this;
+        this.proxyUrl = null;
+        this.proxyQueryStringHash = null;
         // this.clientReqHeaders = this.req.headers;
         // this.proxyMethod = req.method;
 
-        // Removes /? from beginning of url (which is the query string part
-        // of the URL in this case)
-        var proxyQueryString = req.url.substring(2);
-        var proxyQueryStringArr = proxyQueryString.split('?');
-        // Remove url from querystring
-        this.proxyUrl = proxyQueryStringArr[0];
-
-        var urlQueryString = proxyQueryStringArr[1];
-        var urlQueryString = unescape(urlQueryString);
-        var urlQueryStringArr = urlQueryString.split('&');
-
-        // Convert query string params to obj
-        this.queryStringObj = {};
-        for (var i = 0; i < urlQueryStringArr.length; i++) {
-            //console.log(urlQueryStringArr[i]);
-            var paramArr = urlQueryStringArr[i].split('=');
-            this.queryStringObj[paramArr[0]] = paramArr[1];
-        }
-
-        if (this.configJSON.accessToken) {
-            this.queryStringObj['token'] = this.configJSON.accessToken;
-        }
+        this.processURL(this.req.url);
+        this.addAccessTokenToQuery();
     }
 
     _createClass(EsriProxy, [{
+        key: 'processURL',
+        value: function processURL(url) {
+            // Removes /? from beginning of url (which is the query string part
+            // of the URL in this case)
+            var proxyQueryString = this.req.url.substring(2);
+            var proxyQueryStringArr = proxyQueryString.split('?');
+            // Remove url from querystring
+            this.proxyUrl = proxyQueryStringArr[0];
+
+            var urlQueryString = proxyQueryStringArr[1];
+            var urlQueryString = unescape(urlQueryString);
+            var urlQueryStringArr = urlQueryString.split('&');
+
+            this.proxyQueryStringHash = this.convertQueryStringArrToObj(urlQueryStringArr);
+        }
+    }, {
+        key: 'convertQueryStringArrToObj',
+        value: function convertQueryStringArrToObj(queryStringArr) {
+            var obj = {};
+            for (var i = 0; i < queryStringArr.length; i++) {
+                //console.log(urlQueryStringArr[i]);
+                var paramArr = queryStringArr[i].split('=');
+                obj[paramArr[0]] = paramArr[1];
+            }
+            return obj;
+        }
+    }, {
+        key: 'addAccessTokenToQuery',
+        value: function addAccessTokenToQuery() {
+            if (this.configJSON.serverUrls[0].accessToken) {
+                this.proxyQueryStringHash['token'] = this.configJSON.serverUrls[0].accessToken;
+            }
+        }
+    }, {
         key: 'attemptProxy',
         value: function attemptProxy() {
             var self = this;
             request({
                 url: self.proxyUrl,
-                qs: self.queryStringObj,
+                qs: self.proxyQueryStringHash,
                 method: 'GET'
             }, function (error, response, body) {
                 var parsedBody = {};
@@ -80,8 +95,8 @@ var EsriProxy = function () {
                     'expiration': '1440'
                 }
             }, function (error, response, body) {
-                self.configJSON.accessToken = body.access_token;
-                self.queryStringObj['token'] = self.configJSON.accessToken;
+                self.configJSON.serverUrls[0].accessToken = body.access_token;
+                self.addAccessTokenToQuery();
                 callback();
             });
         }
