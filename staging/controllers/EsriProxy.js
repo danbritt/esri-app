@@ -17,13 +17,33 @@ var EsriProxy = function () {
         this.proxyUrl = null;
         this.proxyQueryStringHash = null;
         // this.clientReqHeaders = this.req.headers;
-        // this.proxyMethod = req.method;
+        this.proxyMethod = req.method;
+        if (this.proxyMethod === 'GET') {
+            this.processURL(this.req.url);
+        } else if (this.proxyMethod === 'POST') {
+            this.processURLPOST(this.req.url);
+        }
 
-        this.processURL(this.req.url);
         this.addAccessTokenToQuery();
     }
 
     _createClass(EsriProxy, [{
+        key: 'processURLPOST',
+        value: function processURLPOST(url) {
+            // Removes /? from beginning of url (which is the query string part
+            // of the URL in this case)
+            var proxyQueryString = this.req.url.substring(2);
+            var proxyQueryStringArr = proxyQueryString.split('?');
+            // Remove url from querystring
+            this.proxyUrl = proxyQueryStringArr[0];
+
+            // var urlQueryString = proxyQueryStringArr[1];
+            // var urlQueryString = unescape(urlQueryString);
+            // var urlQueryStringArr = urlQueryString.split('&');
+            //
+            this.proxyQueryStringHash = this.req.body;
+        }
+    }, {
         key: 'processURL',
         value: function processURL(url) {
             // Removes /? from beginning of url (which is the query string part
@@ -56,16 +76,26 @@ var EsriProxy = function () {
             if (this.configJSON.serverUrls[0].accessToken) {
                 this.proxyQueryStringHash['token'] = this.configJSON.serverUrls[0].accessToken;
             }
+            //this.proxyQueryStringHash.f = 'json';
         }
     }, {
         key: 'attemptProxy',
         value: function attemptProxy() {
             var self = this;
+            if (this.proxyMethod === 'POST') {
+                console.log(self.proxyUrl);
+                console.log(this.proxyQueryStringHash);
+            }
             this.request({
                 url: self.proxyUrl,
                 qs: self.proxyQueryStringHash,
-                method: 'GET'
+                method: 'POST'
             }, function (error, response, body) {
+                // if (self.proxyMethod === 'POST') {
+                //     console.log(response);
+                //     console.log(body);
+                //     console.log(error);
+                // }
                 var parsedBody = {};
                 try {
                     parsedBody = JSON.parse(body);

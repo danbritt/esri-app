@@ -1,7 +1,7 @@
 var express = require('express');
 var request = require('request');
 //var JWT = require('jsonwebtoken');
-//var bodyParser = require('body-parser');
+var bodyParser = require('body-parser');
 //var sequelize = require('sequelize');
 //var request = require('request');
 var esriProxy = require('../controllers/EsriProxy.js');
@@ -34,9 +34,9 @@ var router = new express.Router();
 //router.use(bodyParser.json());
 
 // This is for form-data requests
-/*router.use(bodyParser.urlencoded({
+router.use(bodyParser.urlencoded({
 	extended: true
-}));*/
+}));
 
 // Any api routes that start with /api/s will process the JWT
 // Ex: /api/s/route1
