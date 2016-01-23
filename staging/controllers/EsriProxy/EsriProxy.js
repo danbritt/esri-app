@@ -76,42 +76,40 @@ var EsriProxy = function () {
     }, {
         key: 'attemptProxy',
         value: function attemptProxy() {
-            console.log(this.proxyUrl);
-            console.log(this.requestVarHash);
-            var self = this;
-            // if (this.proxyMethod === 'GET') {
-            //     console.log(self.proxyUrl);
-            //     console.log(this.requestVarHash);
-            // }
             request({
-                url: self.proxyUrl,
-                qs: self.requestVarHash,
-                method: 'POST'
-            }, function (error, response, body) {
-                // if (self.proxyMethod === 'POST') {
-                //     console.log(response);
-                //     console.log(body);
-                //     console.log(error);
-                // }
-                var parsedBody = {};
-                try {
-                    parsedBody = JSON.parse(body);
-                } catch (err) {}
+                url: this.proxyUrl,
+                qs: this.requestVarHash,
+                method: this.proxyMethod
+            }, this.processProxyURLResponse.bind(this));
+        }
+    }, {
+        key: 'processProxyURLResponse',
+        value: function processProxyURLResponse(error, response, body) {
+            var parsedBody = null;
+            try {
+                parsedBody = JSON.parse(body);
+            } catch (err) {
+                parsedBody = {};
+            }
 
-                if (parsedBody.error && (parsedBody.error.code === 403 || parsedBody.error.code === 498 || parsedBody.error.code === 499) && !self.triedNewToken) {
-                    console.log('getting token');
-                    self.getToken(self.attemptProxy.bind(self));
-                } else {
-                    console.log('returning body');
-                    self.res.send(body);
-                }
-            });
+            if (parsedBody.error && (parsedBody.error.code === 403 || parsedBody.error.code === 498 || parsedBody.error.code === 499) && !this.triedNewToken) {
+                this.getToken();
+            } else {
+                this.res.send(body);
+            }
+        }
+    }, {
+        key: 'processAuthURLResponse',
+        value: function processAuthURLResponse(error, response, body) {
+            this.configJSON.serverUrls[0].accessToken = body.access_token;
+            this.addAccessTokenToHash();
+            this.attemptProxy();
         }
     }, {
         key: 'getToken',
-        value: function getToken(callback) {
+        value: function getToken() {
             var self = this;
-            self.triedNewToken = true;
+            this.triedNewToken = true;
             request({
                 url: this.configJSON.serverUrls[0].oauth2Endpoint,
                 method: 'POST',
@@ -123,11 +121,7 @@ var EsriProxy = function () {
                     'grant_type': 'client_credentials',
                     'expiration': '1440'
                 }
-            }, function (error, response, body) {
-                self.configJSON.serverUrls[0].accessToken = body.access_token;
-                self.addAccessTokenToHash();
-                callback();
-            });
+            }, this.processAuthURLResponse.bind(this));
         }
     }]);
 
