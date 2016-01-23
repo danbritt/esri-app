@@ -1,12 +1,12 @@
 'use strict';
 
 var express = require('express');
-var request = require('request');
+// var request = require('request');
 //var JWT = require('jsonwebtoken');
 var bodyParser = require('body-parser');
 //var sequelize = require('sequelize');
 //var request = require('request');
-var esriProxy = require('../controllers/EsriProxy.js');
+var esriProxyController = require('../controllers/EsriProxy/EsriProxyController.js');
 var esriProxyConfig = require('../config.js');
 
 // Sequelize example
@@ -87,7 +87,7 @@ router.use(bodyParser.urlencoded({
 //
 // });
 
-router.use('/esriProxy', new esriProxy(esriProxyConfig, request));
+router.use('/esriProxy', new esriProxyController(esriProxyConfig));
 
 // router.get('/test', function(req,res) {
 // 	var responseObj = {

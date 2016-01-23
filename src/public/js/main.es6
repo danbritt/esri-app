@@ -5,6 +5,10 @@ esriApp.controller('UIController', ['$scope', function($scope) {
     $scope.mapY = 0;
     $scope.lat = 0;
     $scope.lon = 0;
+    $scope.showTooltip = false;
+    $scope.showNoteText = false;
+    $scope.noteText = '';
+    var selectedNote = null;
 
     require([
         'esri/map',
@@ -17,8 +21,14 @@ esriApp.controller('UIController', ['$scope', function($scope) {
         'esri/graphic',
         'esri/tasks/GeometryService',
         'esri/geometry/webMercatorUtils',
+        'esri/tasks/query',
+        'esri/symbols/SimpleMarkerSymbol',
+        'esri/symbols/SimpleLineSymbol',
+        'esri/Color',
+        'esri/layers/FeatureLayer',
+        'esri/geometry/screenUtils',
         'dojo/domReady!'
-    ], function(Map, arcgisUtils, esriConfig, urlUtils, Point, SpatialReference, Draw, Graphic, GeometryService, webMercatorUtils) {
+    ], function(Map, arcgisUtils, esriConfig, urlUtils, Point, SpatialReference, Draw, Graphic, GeometryService, webMercatorUtils, Query, SimpleMarkerSymbol, SimpleLineSymbol, Color, FeatureLayer, screenUtils) {
         var map = null;
 
 
@@ -59,29 +69,115 @@ esriApp.controller('UIController', ['$scope', function($scope) {
             var drawToolbar = new Draw(map);
             var notesLayer = map.getLayer('notes_7183');
 
-            notesLayer.on('click', function(event) {
-                console.log(event);
+            var selectionMarker = new SimpleMarkerSymbol();
+            var line = new SimpleLineSymbol();
+            line.setColor(new Color([56, 168, 0, 1]));
+            selectionMarker.setOutline(line);
+            selectionMarker.setColor(new Color([255, 255, 255, 1]));
+            notesLayer.setSelectionSymbol(selectionMarker);
+
+            notesLayer.on('mouse-over', function(event) {
+                $scope.showTooltip = true;
+                $('#toolTip').text(event.graphic.attributes.note);
+                if (!event.graphic.attributes.note) {
+                    $('#toolTip').text('** NO NOTE AVAILABLE **');
+                }
+                $('#toolTip').css({
+                    top: event.screenPoint.y,
+                    left: event.screenPoint.x + 20
+                });
+                $scope.$apply();
             });
 
+            notesLayer.on('mouse-out', function(event) {
+                $scope.showTooltip = false;
+                $('#toolTip').text('');
+                $('#toolTip').css({
+                    top: 0,
+                    left: 0
+                });
+                $scope.$apply();
+            });
+
+            notesLayer.on('click', function(event) {
+                // This DOES NOT work. It selects the point briefly, but then Removes
+                // the selection immediately after running the success callback.
+                // console.log(event);
+                // var query = new Query();
+                // query.geometry = event.graphic.geometry;
+                // notesLayer.selectFeatures(query, FeatureLayer.SELECTION_NEW, function(features, selectionMethod) {
+                //     console.log('features');
+                //     console.log(features);
+                //     console.log(notesLayer.getSelectedFeatures());
+                //     console.log(notesLayer);
+                // },
+                // function(err) {
+                //     console.log('err');
+                //     console.log(err);
+                // });
+
+                if (selectedNote) {
+                    selectedNote.setSymbol(null);
+                }
+                selectedNote = event.graphic;
+                selectedNote.setSymbol(selectionMarker);
+                event.stopPropagation();
+
+                // console.log(event.graphic.symbol);
+                // if (!event.graphic.symbol) {
+                //     event.graphic.setSymbol(selectionMarker);
+                // } else {
+                // //if (event.graphic.symbol == selectionMarker) {
+                //     event.graphic.setSymbol(null);
+                // }
+            });
+            var newGeometry = null;
             drawToolbar.on("draw-end", function(evt) {
+                //$scope.showNoteText = true;
+                var screenPoint = screenUtils.toScreenPoint(map.extent, map.width, map.height, evt.geometry);
+                $scope.showNoteText = true;
+                $('#noteText').css({
+                    left: screenPoint.x + 20,
+                    top: screenPoint.y
+                });
                 drawToolbar.deactivate();
                 //var newAttributes = lang.mixin({}, selectedTemplate.template.prototype.attributes);
-                var newGraphic = new Graphic(evt.geometry, null, {ID: 1010, 'SHAPE_1': 'POLYPOLY', note: "THIS IS A NEW NOTE"});
-                notesLayer.applyEdits([newGraphic], null, null);
+                newGeometry = evt.geometry;
+                // notesLayer.applyEdits([newGraphic], null, null);
+                $scope.$apply();
             });
 
              //drawToolbar.activate(Draw.POINT);
 
             $scope.addNote = function() {
-
                 console.log('adding note');
                 // console.log(notesLayer.applyEdits);
                 drawToolbar.activate(Draw.POINT);
             };
 
-            // map.on('click', function(event) {
-            //     drawToolbar.
-            // });
+            $scope.saveNote = function() {
+                var newGraphic = new Graphic(newGeometry, null, {ID: '', 'SHAPE_1': 'POLYPOLY', note: $scope.noteText});
+                notesLayer.applyEdits([newGraphic], null, null);
+                $scope.noteText = '';
+                $scope.showNoteText = false;
+            };
+
+            $scope.deleteNote = function() {
+                console.log('deleting note');
+                // console.log(notesLayer.applyEdits);
+                if (selectedNote) {
+                    notesLayer.applyEdits(null, null, [selectedNote]);
+                }
+
+            };
+
+            map.on('click', function(event) {
+                if (selectedNote) {
+                    selectedNote.setSymbol(null);
+                    selectedNote = null;
+                }
+                console.log('map clicked');
+            });
 
             map.on('mouse-move', function(event) {
                 $scope.mapX = event.mapPoint.x;

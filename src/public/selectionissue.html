@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- Keep mobile devices from zooming the page -->
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+        <title>New App</title>
+
+        <script src="vendor/jquery/dist/jquery.min.js"></script>
+        <script src="vendor/jquery-ui/jquery-ui.min.js"></script>
+
+        <script src="vendor/angular/angular.min.js"></script>
+
+        <link rel="stylesheet" href="https://js.arcgis.com/3.15/esri/css/esri.css">
+        <link rel="stylesheet" href="https://js.arcgis.com/3.15/dijit/themes/claro/claro.css">
+        <script src="https://js.arcgis.com/3.15/"></script>
+
+		<!-- Main CSS -->
+        <link rel="stylesheet" href="css/styles.css">
+
+        <script src="js/main.js"></script>
+
+        <script>
+            require([
+                'esri/map',
+                'esri/arcgis/utils',
+                'esri/config',
+                'esri/urlUtils',
+                'esri/geometry/Point',
+                'esri/SpatialReference',
+                'esri/graphic',
+                'esri/tasks/GeometryService',
+                'esri/tasks/query',
+                'esri/symbols/SimpleMarkerSymbol',
+                'esri/symbols/SimpleLineSymbol',
+                'esri/Color',
+                'esri/layers/FeatureLayer',
+                'dojo/domReady!'
+            ], function(Map, arcgisUtils, esriConfig, urlUtils, Point, SpatialReference, Graphic, GeometryService, Query, SimpleMarkerSymbol, SimpleLineSymbol, Color, FeatureLayer) {
+                var map = null;
+
+
+
+                urlUtils.addProxyRule({
+                    urlPrefix: 'www.arcgis.com',
+                    proxyUrl: '/api/esriProxy'
+                });
+                urlUtils.addProxyRule({
+                    urlPrefix: 'services5.arcgis.com',
+                    proxyUrl: '/api/esriProxy'
+                });
+                urlUtils.addProxyRule({
+                    urlPrefix: 'tasks.arcgisonline.com',
+                    proxyUrl: '/api/esriProxy'
+                });
+
+                esriConfig.defaults.geometryService = new GeometryService('http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
+
+                var createMapOptions = {
+                    mapOptions: {
+                        center: new Point(-10169947, 4459788, new SpatialReference(102100)),
+                        zoom: 15
+                    }
+                }
+                arcgisUtils.createMap('4e3f8d8b87d54e589e60eca1f5c770fe', 'mapDiv', createMapOptions).then(function (res) {
+                    map = res.map;
+
+                    // console.log(map.basemapLayerIds);
+                    // console.log(map.graphicsLayerIds);
+                    // console.log(map.layerIds);
+                    var notesLayer = map.getLayer('notes_7183');
+
+                    var selectionMarker = new SimpleMarkerSymbol();
+                    var line = new SimpleLineSymbol();
+                    line.setColor(new Color([56, 168, 0, 1]));
+                    selectionMarker.setOutline(line);
+                    selectionMarker.setColor(new Color([255, 255, 255, 1]));
+                    notesLayer.setSelectionSymbol(selectionMarker);
+
+                    notesLayer.on('click', function(event) {
+                        // This DOES NOT work. It selects the point briefly, but then Removes
+                        // the selection immediately after running the success callback.
+                        var query = new Query();
+                        query.geometry = event.graphic.geometry;
+                        notesLayer.selectFeatures(query, FeatureLayer.SELECTION_NEW, function(features, selectionMethod) {
+                            console.log('features');
+                            console.log(features);
+                            console.log(notesLayer.getSelectedFeatures());
+                            //console.log(notesLayer);
+                        },
+                        function(err) {
+                            console.log('err');
+                            console.log(err);
+                        });
+                    });
+
+                });
+            });
+        </script>
+
+    </head>
+    <body>
+        <div id="mapDiv"></div>
+    </body>
+</html>

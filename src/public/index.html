@@ -19,15 +19,13 @@
 
         <script src="js/main.js"></script>
 
-        <script>
-
-        </script>
-
     </head>
     <body ng-app="esriApp" ng-controller="UIController">
         <div id="mapUI">
             <div>
                 <button ng-click="addNote()">Add Note</button>
+                <br>
+                <button ng-click="deleteNote()">Delete Selected Note</button>
             </div>
             <div>
                 Lat: {{lat}}
@@ -41,5 +39,11 @@
             </div>
         </div>
         <div id="mapDiv"></div>
+        <div id="toolTip" ng-show="showTooltip"></div>
+        <div id="noteText" ng-show="showNoteText">
+            <input type="text" ng-model="noteText"></input>
+            <br>
+            <button ng-click="saveNote()">Save Note</button>
+        </div>
     </body>
 </html>
